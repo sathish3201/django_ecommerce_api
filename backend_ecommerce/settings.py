@@ -12,27 +12,28 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 import os
 from pathlib import Path
 from datetime import timedelta
+from dotenv import load_dotenv
+
+load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+import dj_database_url
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-88@uv)+jo%%@of7*8(9y_r+40unv^3l8ojt&l!m^w7=2^ti-k='
-# SECRET_KEY = os.environ.get('SECRET_KEY', default='thisishugesecret')
+
+SECRET_KEY = os.environ.get('SECRET_KEY', os.getenv('SECRET_KEY'))
+print(SECRET_KEY)
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-# DEBUG = 'RENDER' not in os.environ
+DEBUG = os.environ.get('DEBUG', os.getenv('DEBUG')) 
 
-print(os.environ.get('SECRET_KEY', default='thisishugesecret'))
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS","").split(' ') if not DEBUG else []
 
-RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
-if RENDER_EXTERNAL_HOSTNAME:
-    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
-# # Application definition
+
+# Application definition
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -47,11 +48,9 @@ INSTALLED_APPS = [
 ]
 # CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOWED_ORIGINS =[
-    "http://localhost:5173",
-    # RENDER_EXTERNAL_HOSTNAME,
-    # os.environ.get('RENDER_EXTERNAL_HOSTNAME'),
-    # os.getenv("REACT_URL"),
+    os.environ.get("RENDER_EXTERNAL_HOSTNAME", os.getenv("RENDER_EXTERNAL_HOSTNAME")),
 ]
+
 CORS_ALLOW_CREDENTIALS = True
 # Add jwt authentication configuration 
 REST_FRAMEWORK = {
@@ -81,7 +80,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware', # Add this line
-    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware'
 ]
 
 ROOT_URLCONF = 'backend_ecommerce.urls'
@@ -109,10 +108,13 @@ WSGI_APPLICATION = 'backend_ecommerce.wsgi.application'
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': { 
+        'ENGINE': os.getenv("ENGINE"),
+        'NAME': BASE_DIR / os.getenv("DATABASE")
+    } if(os.environ.get("DATABASE_DATA_URL")) else not dj_database_url.parse(os.environ.get("DATABASE_DATA_URL"))
+    ,
+    
+   
 }
 
 
@@ -151,13 +153,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-
-if not DEBUG:
-    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFileStorage'
