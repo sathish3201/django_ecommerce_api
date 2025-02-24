@@ -46,10 +46,10 @@ INSTALLED_APPS = [
     'shop',
     'corsheaders',
 ]
-# CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOWED_ORIGINS =[
-    os.environ.get("RENDER_EXTERNAL_HOSTNAME", os.getenv("RENDER_EXTERNAL_HOSTNAME")),
-]
+CORS_ALLOW_ALL_ORIGINS = True
+# CORS_ALLOWED_ORIGINS =[
+#     os.environ.get("RENDER_EXTERNAL_HOSTNAME", os.getenv("RENDER_EXTERNAL_HOSTNAME")),
+# ]
 
 CORS_ALLOW_CREDENTIALS = True
 # Add jwt authentication configuration 
