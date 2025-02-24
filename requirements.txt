@@ -6,3 +6,4 @@ django-cors-headers
 dj-database-url
 psycopg2-binary
 dotenv
+djangorestframework-simplejwt
