@@ -30,7 +30,8 @@ SECRET_KEY = os.environ.get('SECRET_KEY', os.getenv('SECRET_KEY'))
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', os.getenv('DEBUG')) 
 
-ALLOWED_HOSTS = [os.environ.get("ALLOWED_HOSTS")]
+ALLOWED_HOSTS = []
+# [os.environ.get("ALLOWED_HOSTS")]
 
 
 # Application definition
@@ -48,7 +49,8 @@ INSTALLED_APPS = [
 ]
 CORS_ORIGIN_ALLOW_ALL = False
 CORS_ORIGIN_WHITELIST =(
-    os.environ.get("RENDER_EXTERNAL_HOSTNAME", os.getenv("RENDER_EXTERNAL_HOSTNAME")),
+    # os.environ.get("RENDER_EXTERNAL_HOSTNAME", os.getenv("RENDER_EXTERNAL_HOSTNAME")),
+    "https://react-ecommerce-site-6xbw.onrender.com",
 )
 
 

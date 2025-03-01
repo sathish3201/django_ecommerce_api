@@ -7,6 +7,7 @@ from django.contrib.auth.models import User, Group
 from rest_framework.decorators import action
 from django.db import transaction
 from rest_framework import permissions 
+
 class IsAdmin(permissions.BasePermission):
     def has_permission(self, request, view):
         return request.user.groups.filter(name="admin").exists()
@@ -23,6 +24,19 @@ class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     permission_classes = [IsAuthenticated]
+
+    @action(detail= True, methods=['get'] , url_path='get_by_id')
+    def get_product_by_id(self, request, *args, **kwargs):
+        ''' get by id'''
+        prodid = int(kwargs.get('pk'))
+
+        try:
+            product = Product.objects.get(id = prodid)
+        except Product.DoesNotExist:
+            return Response({"detail": f"Product not found {prodid}"})
+        return Response({"product": ProductSerializer(product).data})
+
+   
    
 
 class OrderViewSet(viewsets.ModelViewSet):
@@ -103,8 +117,6 @@ class CartViewSet(viewsets.ModelViewSet):
         return Response({"total_price":total_price})
         
         
-
-
 # creating jwt token view
 from rest_framework.views import APIView 
 from rest_framework.response import Response 
@@ -154,11 +166,7 @@ class LoginAPIView(APIView):
             roles = [group.name for group in user.groups.all()]
             return Response({
                 "user_role": {
-                    "id": user.id,
-                     "username": user.username,
-                    "email": user.email,
-                    "first_name" : user.first_name,
-                    "last_name" : user.last_name,
+                    "user":UserSerializer(user).data,
                      "access_token" : str(access_token),
                      "refresh_token": str(refresh),
                     "roles" : roles

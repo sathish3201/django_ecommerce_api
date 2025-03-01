@@ -19,11 +19,11 @@ class CartSerializer(serializers.ModelSerializer):
     product = ProductSerializer
     class Meta:
         model = Cart
-        fields = ['id','user','product','quantity',]
+        fields = ['id','user','product','quantity']
     
 
 class OrderItemSerializer(serializers.ModelSerializer):
-
+    
     class Meta:
         model = OrderItem
         fields = '__all__'
