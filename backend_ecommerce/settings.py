@@ -48,10 +48,9 @@ INSTALLED_APPS = [
 ]
 CORS_ORIGIN_ALLOW_ALL = False
 CORS_ORIGIN_WHITELIST =(
-    # os.environ.get("RENDER_EXTERNAL_HOSTNAME", os.getenv("RENDER_EXTERNAL_HOSTNAME")),
     "https://react-ecommerce-site-6xbw.onrender.com",
 )
-
+FRONTEND_URL = os.environ.get("RENDER_EXTERNAL_HOSTNAME", os.getenv("RENDER_EXTERNAL_HOSTNAME")),
 
 CORS_ALLOW_CREDENTIALS = True
 # Add jwt authentication configuration 
@@ -65,13 +64,21 @@ REST_FRAMEWORK = {
 }
 # JWT SETTINGS ( CAN BE ADJUSTED BASED ON NEEDS)
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME' : timedelta(minutes = 30),
+    'ACCESS_TOKEN_LIFETIME' : timedelta(minutes = 5),
     'REFRESH_TOKEN_LIFETIME' : timedelta(days = 1),
     'ROTATE_REFRESH_TOKEN' : False,
     'BLACKLIST_AFTER_ROTATION': True,
     'UPDATE_LAST_LOGIN': False,
     
 }
+
+EMAIL_BACKEND = os.environ.get("EMAIL_BACKEND", os.getenv("EMAIL_BACKEND"))
+EMAIL_HOST = os.environ.get("EMAIL_HOST", os.getenv("EMAIL_HOST"))
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", os.getenv("EMAIL_HOST_USER"))
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", os.getenv("EMAIL_HOST_PASSWORD"))
+DEFAULT_FROM_EMAIL = 'abc@gmail.com'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -90,7 +97,7 @@ ROOT_URLCONF = 'backend_ecommerce.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates',],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

@@ -1,12 +1,21 @@
 from rest_framework import viewsets, status
-from .models import Product, Order, Cart, OrderItem
-from .serializers import ProductSerializer, OrderSerializer, CartSerializer, UserSerializer, OrderItemSerializer
+from .models import Product, Order, Cart,Delivery
+from .serializers import ProductSerializer, OrderSerializer, CartSerializer, UserSerializer,DeliverySerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 from django.contrib.auth.models import User, Group
 from rest_framework.decorators import action
 from django.db import transaction
 from rest_framework import permissions 
+from django.shortcuts import render
+# 
+from django.shortcuts import get_object_or_404
+from django.core.mail import send_mail,EmailMessage 
+
+from django.conf import settings
+
+from django.template.loader import render_to_string 
+from django.utils.encoding import force_bytes
 
 class IsAdmin(permissions.BasePermission):
     def has_permission(self, request, view):
@@ -23,13 +32,12 @@ class IsCustomer(permissions.BasePermission):
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     @action(detail= True, methods=['get'] , url_path='get_by_id')
     def get_product_by_id(self, request, *args, **kwargs):
         ''' get by id'''
         prodid = int(kwargs.get('pk'))
-
         try:
             product = Product.objects.get(id = prodid)
         except Product.DoesNotExist:
@@ -37,85 +45,58 @@ class ProductViewSet(viewsets.ModelViewSet):
         return Response({"product": ProductSerializer(product).data})
 
    
-   
-
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
     permission_classes = [IsAuthenticated]
+    
+    def destroy(self, request, *args, **kwargs):
+        orderid = kwargs.get('pk')
+        instace = get_object_or_404(Order, id= orderid)
+        instace.delete()
+        return Response({'detail': f'successfully deleted order id:{orderid}'},status= status.HTTP_204_NO_CONTENT)
+    
 
-
-        
-    @action(detail= True, methods=['post'], url_path='place-order')
+    @action(detail= True, methods=['post'] , url_path='place-order')
     @transaction.atomic
     def place_order(self, request, *args, **kwargs):
-        ''' place order by transfering cart items  to the order'''
-         # get specific order
+        ''' get by id'''
         userid = int(kwargs.get('pk'))
-
-        if userid != request.user.id:
-            return Response({"detail": "you cannot place order of another user..","user":request.user.id,},status= status.HTTP_400_BAD_REQUEST)
-        cart = Cart.objects.filter(user = request.user)
-
-        if not cart:
-            return Response({"error": "Cart is Empty"}, status= status.HTTP_404_NOT_FOUND)
-        # check all product quantity less than stack
-        for item in cart.all():
-            try:
-                product = Product.objects.get(id = item.product.id)
-                if product.stock < item.quantity:
-                    return Response({"detail":f"quantity should be less than stock , stock  is {product.stock} for product {product.name}"})
-            except Product.DoesNotExist:
-                return Response({"error":f"product not found {item.product}"},status= status.HTTP_404_NOT_FOUND)
+        if request.user.id != userid:
+            return Response({'detail':'UnAuthorized to change'},status=status.HTTP_403_FORBIDDEN)
+        
+        try:
+            serializer= request.data.get('delivery_detail')
             
-        # create new order
-        order = Order.objects.create(
-            user = request.user,
-            status = "pending",
-            total_price= sum(item.product.price*item.quantity for item in cart.all())
-        )
-        # add order to cart item  to order
-        for item in cart.all():
-            OrderItem.objects.create(
-                order  = order,
-                product = item.product,
-                quantity = item.quantity,
-                price = item.product.price * item.quantity
-            )
-        # clear all items
-        cart.all().delete()
-        return Response({"detail": f"Order Placed Successfully with order id : {order.id}"})
-        # cart_items = Cart.objects.filter(user = userid)
-        # return Response({"message": cart_}, status=status.HTTP_201_CREATED)
+            delivery_detail = Delivery.objects.create(fname = serializer['fname'], lname = serializer['lname'], email = serializer['email'],
+                                                      mobileno = serializer['mobileno'], address = serializer['address'], country = serializer['country'], state = serializer['state'], 
+                                                      city = serializer['city'], zip=serializer['zip'])
+        except Exception:
+            return Response({'detail':'error in creating Delivery'},status= status.HTTP_404_NOT_FOUND)
+        print(request.data.get('cart_items'))
+
+        cart_items=[]
+        try:
+            for item in request.data.get('cart_items'):
+                print(item)
+                product = Product.objects.get(id = item['product']['id'])
+             
+                cart_items.append(Cart.objects.create(product = product, quantity = item['quantity']))
+        except Exception:
+            return Response({'detail': 'error in creating cart'},status=status.HTTP_404_NOT_FOUND)
+        
+        order = Order.objects.create(user = request.user, delivery_detail = delivery_detail)
+        order.cart.set(cart_items)
+        return Response({'detail':f"successfulll with order id {order.id}"},status= status.HTTP_201_CREATED)
+    
+        
+    
+       
 
 class CartViewSet(viewsets.ModelViewSet):
     queryset = Cart.objects.all()
     serializer_class = CartSerializer
     permission_classes = [IsAuthenticated]
-
-    @action(detail= True, methods=['get'])
-    def checkout(self, request,*args, **kwargs):
-        userid = int(kwargs.get('pk'))
-        if userid != request.user.id:
-            return Response({"detail": "you cannot place order of another user..","user":request.user.id,},status= status.HTTP_400_BAD_REQUEST)
-        try:
-            cart = Cart.objects.filter(user = request.user)
-
-        except Cart.DoesNotExist:
-            return Response({"detail": "you is empty"},status=status.HTTP_404_NOT_FOUND)
-        for item in cart.all():
-            try:
-                product = Product.objects.get(id = item.product.id)
-                if product.stock < item.quantity:
-                    item.delete()
-                    return Response({"detail":f"quantity should be less than stock , stock  is {product.stock} for product {product.name}"})
-            except Product.DoesNotExist:
-                return Response({"error":f"product not found {item.product}"},status= status.HTTP_404_NOT_FOUND)
-        # cart.all().filter(lambda x: x.quantity > x.product.stock).delete()
-        
-        total_price = sum(item.quantity * item.product.price for item in cart.all())
-        return Response({"total_price":total_price})
-        
         
 # creating jwt token view
 from rest_framework.views import APIView 
@@ -126,25 +107,30 @@ class RegisterAPIView(APIView):
     permission_classes = [AllowAny]
     @transaction.atomic
     def post(self, request):
-        username = request.data.get('username')
+        fname = request.data.get('fname')
+        lname = request.data.get('lname')
         email = request.data.get('email')
+        username = request.data.get('username')
         password = request.data.get('password')
-        role = request.data.get('role','customer') # Default role is 'Customer'
+        # role = request.data.get('role','customer') # Default role is 'Customer'
         # Validate the role 
-        valid_role = ['admin','customer','vendor']
-        if role not in valid_role:
-            return Response({"error": "Invalid role. Choose from 'Admin', 'Customer', 'Vendor'."},
-                            status= status.HTTP_400_BAD_REQUEST)
+        print(fname, lname, email, password)
+        # valid_role = ['admin','customer','vendor']
+        # if role not in valid_role:
+        #     return Response({"error": "Invalid role. Choose from 'Admin', 'Customer', 'Vendor'."},
+        #                     status= status.HTTP_400_BAD_REQUEST)
         # create user and assign the password
-        user = User.objects.create(username = username, email = email)
+        user = User.objects.create(username = username, email=email)
+        user.first_name = fname
+        user.last_name = lname
         user.set_password(password)
         # assign the role to the user by adding the user to the appropriate group 
-        group, created = Group.objects.get_or_create(name = role)
-        user.groups.add(group)
+        # group, created = Group.objects.get_or_create(name = role)
+        # user.groups.add(group)
 
         # save the user
         user.save()
-        return Response({"message":f"User created with role {role}"}, status= status.HTTP_201_CREATED)
+        return Response({"message":f"User created with role {username}status= status.HTTP_201_CREATED"})
     http_method_names = ['post']
 
 class LoginAPIView(APIView):
@@ -152,10 +138,10 @@ class LoginAPIView(APIView):
     permission_classes = [AllowAny]
     @transaction.atomic
     def post(self, request):
-        username = request.data.get('username')
+        email = request.data.get('email')
         password = request.data.get('password').strip()
 
-        user = User.objects.filter(username = username).first()
+        user = User.objects.filter(email = email).first()
         # if user:
         #     return Response({"message": f"user found:{user.username} with password {user.password} with {user.check_password(password)} given {password}"},status= status.HTTP_200_OK)
         if user and user.check_password(password):
@@ -163,13 +149,13 @@ class LoginAPIView(APIView):
             refresh = RefreshToken.for_user(user)
             access_token = str(refresh.access_token)
             #get the user's role 
-            roles = [group.name for group in user.groups.all()]
+            # roles = [group.name for group in user.groups.all()]
             return Response({
                 "user_role": {
                     "user":UserSerializer(user).data,
                      "access_token" : str(access_token),
                      "refresh_token": str(refresh),
-                    "roles" : roles
+                  
                 },
               
             }, status= status.HTTP_200_OK)
@@ -177,13 +163,93 @@ class LoginAPIView(APIView):
         return Response({
             "error": "Invalid credentials"
         }, status= 400)
-    http_method_names = ['post']
+    http_method_names = ['post']    
+
+
+class ContactApiView(APIView):
+    permission_classes=[AllowAny]
+    def post(self, request):
+        print(request.data)
+        user_email = request.data.get('email')
+        subject  = request.data.get('subject')
+        message = request.data.get('message')
+    
+        if user_email and subject and message:
+            try:
+                send_mail(subject= subject, message= message, from_email="abc@gmail.com" ,recipient_list=[user_email] )
+                return Response({'detail':'Email Sent Successfully'})
+            except Exception as e:
+                return Response({'detail':f'Error in Sending email: {e}'})
+        else:
+            return Response({'detail':'All fields required'})
+        
+            
+
+    # http_method_names =['post']
+
+class PasswordResetRequestView(APIView):
+    permission_classes = [AllowAny]
+    
+    def post(self, request, *args, **kwargs):
+        email = request.data.get('email')
+        try:
+            user = User.objects.get(email = email)
+        except User.DoesNotExist:
+            return Response({'detail':f'User with Email Does Not Exist..'})
+        
+
+        token = RefreshToken.for_user(user).access_token
+        reset_url = f"{settings.FRONTEND_URL}/pass-reset/{token}/"
+        context =  {'reset_url':reset_url, 'user':UserSerializer(user).data}
+        print(reset_url)
+        subject ="password reset"
+        message = render_to_string(
+             template_name='email/password_reset_email.html',
+             context= context
+             )
+        
+        # message =f"Click link below to reset your password:\n {reset_url}"
+        
+        try:
+            send_email = EmailMessage(subject= subject, body=message, from_email=settings.DEFAULT_FROM_EMAIL, to=[user.email])
+            # send_email =EmailMessage(subject=subject, message=message, from_email=settings.DEFAULT_FROM_EMAIL, recipient_list=[user.email])
+            send_email.content_subtype = 'html'
+            send_email.send()
+            
+        except Exception as e:
+            return Response({"detail": f"Error in sending password reset..: {e}"}, status= status.HTTP_400_BAD_REQUEST)
+        
+        return Response({"detail": f"Password  Reset link sent to your mail check it and verify it.message"}, status= status.HTTP_200_OK)
+        
+      
+        
+        # return Response(serializer.errors, status= status.HTTP_400_BAD_REQUEST)
+
+class PasswordResetConfirmView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request,token):
+        print("token: ",token)
+        password = request.data.get('password')
+        try:
+            access_token = AccessToken(token= token)
+            user_id = access_token["user_id"]
+            user = User.objects.get(id = user_id)
+        except Exception as e:
+            return Response({"detail":f"Invalid or expired Token: {e}"}, status= status.HTTP_400_BAD_REQUEST)
+        user.set_password(password)
+        user.save()
+        return Response({'detail':"Password reset successfull"}, status= status.HTTP_200_OK)
+
+   
 
 # admin only view
 
 
 class CustomerOnlyView(APIView):
     permission_classes= [AllowAny]
+
+
 
     def get(self, request):
         return Response({"message": "view for only customers"})
