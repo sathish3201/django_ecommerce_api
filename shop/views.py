@@ -195,7 +195,7 @@ class PasswordResetRequestView(APIView):
         try:
             user = User.objects.get(email = email)
         except User.DoesNotExist:
-            return Response({'detail':f'User with Email Does Not Exist..'})
+            return Response({'detail':f'User with Email Does Not Exist..'}, status= status.HTTP_400_BAD_REQUEST)
         
 
         token = RefreshToken.for_user(user).access_token

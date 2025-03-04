@@ -49,6 +49,8 @@ INSTALLED_APPS = [
 CORS_ORIGIN_ALLOW_ALL = False
 CORS_ORIGIN_WHITELIST =(
     "https://react-ecommerce-site-6xbw.onrender.com",
+
+
 )
 FRONTEND_URL = os.environ.get("RENDER_EXTERNAL_HOSTNAME", os.getenv("RENDER_EXTERNAL_HOSTNAME")),
 
@@ -64,7 +66,7 @@ REST_FRAMEWORK = {
 }
 # JWT SETTINGS ( CAN BE ADJUSTED BASED ON NEEDS)
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME' : timedelta(minutes = 5),
+    'ACCESS_TOKEN_LIFETIME' : timedelta(minutes = 10),
     'REFRESH_TOKEN_LIFETIME' : timedelta(days = 1),
     'ROTATE_REFRESH_TOKEN' : False,
     'BLACKLIST_AFTER_ROTATION': True,
