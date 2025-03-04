@@ -199,7 +199,7 @@ class PasswordResetRequestView(APIView):
         
 
         token = RefreshToken.for_user(user).access_token
-        reset_url = f"{settings.FRONTEND_URL}/pass-reset/{token}/"
+        reset_url = f"{settings.FRONTEND_URL}/reset-pass/{token}"
         context =  {'reset_url':reset_url, 'user':UserSerializer(user).data}
         print(reset_url)
         subject ="password reset"
