@@ -52,7 +52,7 @@ CORS_ORIGIN_WHITELIST =(
 
 
 )
-FRONTEND_URL = os.environ.get("RENDER_EXTERNAL_HOSTNAME", os.getenv("RENDER_EXTERNAL_HOSTNAME")),
+FRONTEND_URL = "https://react-ecommerce-site-6xbw.onrender.com"
 
 CORS_ALLOW_CREDENTIALS = True
 # Add jwt authentication configuration 
