@@ -28,11 +28,9 @@ import dj_database_url
 SECRET_KEY = os.environ.get('SECRET_KEY', os.getenv('SECRET_KEY'))
 # print(SECRET_KEY)
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-# os.environ.get('DEBUG', os.getenv('DEBUG')) 
+DEBUG =  os.environ.get('DEBUG', os.getenv('DEBUG')) 
 
-ALLOWED_HOSTS =[]
-# [os.environ.get("ALLOWED_HOSTS")]
+ALLOWED_HOSTS = [os.environ.get("ALLOWED_HOSTS")]
 
 
 # Application definition
@@ -51,11 +49,12 @@ INSTALLED_APPS = [
 CORS_ORIGIN_ALLOW_ALL = False
 CORS_ORIGIN_WHITELIST =(
     "https://react-ecommerce-site-6xbw.onrender.com",
-    "http://localhost:5173",
+    # "http://localhost:5173",
 
 )
-FRONTEND_URL = "http://localhost:5173"
-# "https://react-ecommerce-site-6xbw.onrender.com"
+FRONTEND_URL ="https://react-ecommerce-site-6xbw.onrender.com"
+# "http://localhost:5173"
+
 
 CORS_ALLOW_CREDENTIALS = True
 # Add jwt authentication configuration 
