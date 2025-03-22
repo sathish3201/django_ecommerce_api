@@ -49,11 +49,12 @@ INSTALLED_APPS = [
 CORS_ORIGIN_ALLOW_ALL = False
 CORS_ORIGIN_WHITELIST =(
     "https://react-ecommerce-site-6xbw.onrender.com",
-    # "http://localhost:5173",
+     "http://localhost:5173",
 
 )
-FRONTEND_URL ="https://react-ecommerce-site-6xbw.onrender.com"
-# "http://localhost:5173"
+FRONTEND_URL= os.environ.get('FRONTEND_URL',os.getenv("FRONTEND_URL"))
+
+
 
 
 CORS_ALLOW_CREDENTIALS = True
