@@ -273,7 +273,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.conf import settings
 # from .serializers import PaymentSerializer
-from paytmchecksum import PaytmChecksum
+import paytmchecksum
 
 import random
 import string
@@ -307,7 +307,7 @@ class PaytmPaymentAPI(APIView):
         try:
         #  generate checksum using paytm library
 
-            checksum = PaytmChecksum.generateSignature(json.dumps(paytm_params["body"]), key=settings.PAYTM_MERCHANT_KEY)
+            checksum = paytmchecksum.generateSignature(json.dumps(paytm_params["body"]), key=settings.PAYTM_MERCHANT_KEY)
         except Exception as e:
             return Response({"error": f"error generate check sum : {e}"}, status=status.HTTP_400_BAD_REQUEST)
         # add checksum to parameters
@@ -331,7 +331,7 @@ class PaytmCallback(APIView):
             "mid" : str(settings.PAYTM_MERCHANT_ID),
             "orderId": str(order_id)
         }
-        check_sum = PaytmChecksum.generateSignature(json.dumps(paytmParams['body']),key=settings.PAYTM_MERCHANT_KEY)
+        check_sum = paytmchecksum.generateSignature(json.dumps(paytmParams['body']),key=settings.PAYTM_MERCHANT_KEY)
         # VERIFY CHECK SUM
         paytmParams['head']={
             'signature':check_sum
