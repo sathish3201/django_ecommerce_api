@@ -9,3 +9,4 @@ dotenv
 djangorestframework-simplejwt
 paytmchecksum
 pycryptodome
+requests
