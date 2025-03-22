@@ -50,11 +50,16 @@ class OrderViewSet(viewsets.ModelViewSet):
     serializer_class = OrderSerializer
     permission_classes = [IsAuthenticated]
     
+    @transaction.atomic
     def destroy(self, request, *args, **kwargs):
         orderid = kwargs.get('pk')
-        instace = get_object_or_404(Order, id= orderid)
-        instace.delete()
-        return Response({'detail': f'successfully deleted order id:{orderid}'},status= status.HTTP_204_NO_CONTENT)
+        try:
+             
+            instace = get_object_or_404(Order, id= orderid)
+            instace.delete()
+        except Exception as e:
+            return Response({'detail': f"unable delete your order as :{e}"},status= status.HTTP_404_NOT_FOUND)
+        return Response({'detail': f'successfully deleted order id:{orderid}'},status= status.HTTP_200_OK)
     
 
     @action(detail= True, methods=['post'] , url_path='place-order')
@@ -261,5 +266,83 @@ class SomeAdminOnlyView(APIView):
     def get(self, request):
         return Response({"message": "view for admins only..."})
 
+#  for paytm
 
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from django.conf import settings
+# from .serializers import PaymentSerializer
+from paytmchecksum import PaytmChecksum
 
+import random
+import string
+import json
+import requests
+
+#  for paytm
+class PaytmPaymentAPI(APIView):
+    def post(self, request):
+        # get the amount and customer info
+        amount = request.data.get('total_price')
+        cust_id = str(request.data.get('cust_id'))
+        order_id = str(request.data.get('order_id'))
+        #  prepare Paytm Parameters
+        paytm_params= dict()
+        paytm_params["body"] = {
+            "requestType":"Payment",
+            'mid': settings.PAYTM_MERCHANT_ID,
+            'websiteName':settings.PAYTM_WEBSITE ,
+            'orderId': str(order_id),
+            'callbackUrl': settings.PAYTM_CALLBACK_URL,
+            'txnAmount':{
+                "value":str(amount),
+                "current":"INR",
+            },
+            'userInfo': {
+                "custId": str(cust_id),
+            }
+        }
+
+        try:
+        #  generate checksum using paytm library
+
+            checksum = PaytmChecksum.generateSignature(json.dumps(paytm_params["body"]), key=settings.PAYTM_MERCHANT_KEY)
+        except Exception as e:
+            return Response({"error": f"error generate check sum : {e}"}, status=status.HTTP_400_BAD_REQUEST)
+        # add checksum to parameters
+        paytm_params['head'] ={
+            "signature" : checksum,
+        } 
+        post_data = json.dumps(paytm_params)
+        url = f"https://securegw{settings.PAYTM_URL}.paytm.in/theia/api/v1/initiateTransaction?mid={settings.PAYTM_MERCHANT_ID}&order_Id={order_id}"
+        print(url)
+        response = requests.post(url, data = post_data, headers={"Content-type":"application/json"}).json()
+        print(response)
+        return Response(data= response,status= status.HTTP_200_OK)
+    
+
+class PaytmCallback(APIView):
+    def post(self, request):
+        # paytm sends response with transaction details
+        order_id = request.data.get('order_id')
+        paytmParams = dict()
+        paytmParams["body"] = {
+            "mid" : str(settings.PAYTM_MERCHANT_ID),
+            "orderId": str(order_id)
+        }
+        check_sum = PaytmChecksum.generateSignature(json.dumps(paytmParams['body']),key=settings.PAYTM_MERCHANT_KEY)
+        # VERIFY CHECK SUM
+        paytmParams['head']={
+            'signature':check_sum
+        }
+        post_data = json.dumps(paytmParams)
+        url= "https://securegw{settings.PAYTM_URL}.paytm.in/v3/order/status"
+        response = requests.post(url=url, data=post_data, headers={"Content-Type":"application/json"}).json()
+
+        return Response(data= response, status=status.HTTP_200_OK)
+
+       
+       
+    
+        

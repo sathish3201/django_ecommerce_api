@@ -39,6 +39,16 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = ['id','user','cart','delivery_detail','total_price']
 
+
+
+
+# class PaymentSerializer(serializers.Serializer):
+#     total_price = serializers.DecimalField(max_digits=10, decimal_places=2)
+#     order_id = serializers.CharField(max_length=50)
+#     cust_id = serializers.CharField(max_length=50)
+#     email = serializers.EmailField()
+#     mobile = serializers.CharField(max_length = 50)
+
     
 
 

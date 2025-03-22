@@ -28,9 +28,11 @@ import dj_database_url
 SECRET_KEY = os.environ.get('SECRET_KEY', os.getenv('SECRET_KEY'))
 # print(SECRET_KEY)
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', os.getenv('DEBUG')) 
+DEBUG = True
+# os.environ.get('DEBUG', os.getenv('DEBUG')) 
 
-ALLOWED_HOSTS = [os.environ.get("ALLOWED_HOSTS")]
+ALLOWED_HOSTS =[]
+# [os.environ.get("ALLOWED_HOSTS")]
 
 
 # Application definition
@@ -49,10 +51,11 @@ INSTALLED_APPS = [
 CORS_ORIGIN_ALLOW_ALL = False
 CORS_ORIGIN_WHITELIST =(
     "https://react-ecommerce-site-6xbw.onrender.com",
-
+    "http://localhost:5173",
 
 )
-FRONTEND_URL = "https://react-ecommerce-site-6xbw.onrender.com"
+FRONTEND_URL = "http://localhost:5173"
+# "https://react-ecommerce-site-6xbw.onrender.com"
 
 CORS_ALLOW_CREDENTIALS = True
 # Add jwt authentication configuration 
@@ -74,13 +77,7 @@ SIMPLE_JWT = {
     
 }
 
-EMAIL_BACKEND = os.environ.get("EMAIL_BACKEND", os.getenv("EMAIL_BACKEND"))
-EMAIL_HOST = os.environ.get("EMAIL_HOST", os.getenv("EMAIL_HOST"))
-EMAIL_USE_TLS = True
-EMAIL_PORT = 587
-EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", os.getenv("EMAIL_HOST_USER"))
-EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", os.getenv("EMAIL_HOST_PASSWORD"))
-DEFAULT_FROM_EMAIL = 'abc@gmail.com'
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -170,3 +167,22 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# email configuration
+EMAIL_BACKEND = os.environ.get("EMAIL_BACKEND", os.getenv("EMAIL_BACKEND"))
+EMAIL_HOST = os.environ.get("EMAIL_HOST", os.getenv("EMAIL_HOST"))
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", os.getenv("EMAIL_HOST_USER"))
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", os.getenv("EMAIL_HOST_PASSWORD"))
+DEFAULT_FROM_EMAIL = 'abc@gmail.com'
+
+#  paytm configuration
+
+PAYTM_MERCHANT_ID = os.environ.get("PAYTM_MERCHANT_ID", os.getenv("PAYTM_MERCHANT_ID"))
+PAYTM_MERCHANT_KEY = os.environ.get("PAYTM_MERCHANT_KEY", os.getenv("PAYTM_MERCHANT_KEY"))
+PAYTM_WEBSITE = os.environ.get("PAYTM_WEBSITE", os.getenv("PAYTM_WEBSITE"))
+PAYTM_CHANNEL_ID = os.environ.get("PAYTM_CHANNEL_ID", os.getenv("PAYTM_CHANNEL_ID"))
+PAYTM_INDUSTRY_TYPE = os.environ.get("PAYTM_INDUSTRY_TYPE", os.getenv("PAYTM_INDUSTRY_TYPE"))
+PAYTM_CALLBACK_URL = os.environ.get("PAYTM_CALLBACK_URL", os.getenv("PAYTM_CALLBACK_URL"))
+PAYTM_URL = os.environ.get("PAYTM_URL", os.getenv("PAYTM_URL"))
