@@ -14,9 +14,9 @@ import os
 from django.contrib.auth import get_user_model 
 
 # get the envirolment variables
-username = os.environ.get("DJANGO_SUPERUSER_USERNAME", os.getenv("DJANGO_SUPERUSER_USERNAME"))
-email = os.environ.get("DJANGO_SUPERUSER_USERNAME", os.getenv("DJANGO_SUPERUSER_EMAIL"))
-password =os.environ.get("DJANGO_SUPERUSER_USERNAME", os.getenv("DJANGO_SUPERUSER_PASSWORD"))
+username = os.environ.get("DJANGO_SUPERUSER_USERNAME","admin")
+email = os.environ.get("DJANGO_SUPERUSER_EMAIL", "admin@gmail.com")
+password =os.environ.get("DJANGO_SUPERUSER_PASSWORD","Admin@1234")
 
 User = get_user_model()
 #Check if super user exist or not
