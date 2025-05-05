@@ -112,30 +112,33 @@ class RegisterAPIView(APIView):
     permission_classes = [AllowAny]
     @transaction.atomic
     def post(self, request):
-        fname = request.data.get('fname')
-        lname = request.data.get('lname')
-        email = request.data.get('email')
-        username = request.data.get('username')
-        password = request.data.get('password')
-        # role = request.data.get('role','customer') # Default role is 'Customer'
-        # Validate the role 
-        print(fname, lname, email, password)
-        # valid_role = ['admin','customer','vendor']
-        # if role not in valid_role:
-        #     return Response({"error": "Invalid role. Choose from 'Admin', 'Customer', 'Vendor'."},
-        #                     status= status.HTTP_400_BAD_REQUEST)
-        # create user and assign the password
-        user = User.objects.create(username = username, email=email)
-        user.first_name = fname
-        user.last_name = lname
-        user.set_password(password)
-        # assign the role to the user by adding the user to the appropriate group 
-        # group, created = Group.objects.get_or_create(name = role)
-        # user.groups.add(group)
+        try:
+            fname = request.data.get('fname')
+            lname = request.data.get('lname')
+            email = request.data.get('email')
+            username = request.data.get('username')
+            password = request.data.get('password')
+            # role = request.data.get('role','customer') # Default role is 'Customer'
+            # Validate the role 
+            print(fname, lname, email, password)
+            # valid_role = ['admin','customer','vendor']
+            # if role not in valid_role:
+            #     return Response({"error": "Invalid role. Choose from 'Admin', 'Customer', 'Vendor'."},
+            #                     status= status.HTTP_400_BAD_REQUEST)
+            # create user and assign the password
+            user = User.objects.create(username = username, email=email)
+            user.first_name = fname
+            user.last_name = lname
+            user.set_password(password)
+            # assign the role to the user by adding the user to the appropriate group 
+            # group, created = Group.objects.get_or_create(name = role)
+            # user.groups.add(group)
 
-        # save the user
-        user.save()
-        return Response({"message":f"User created with role {username}status= status.HTTP_201_CREATED"})
+            # save the user
+            user.save()
+            return Response({"detail":f"User created with role {username} Successfull"}, status= status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({"detail": f"Error in Creating User with user name: {e}"})
     http_method_names = ['post']
 
 class LoginAPIView(APIView):
